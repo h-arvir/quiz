@@ -137,7 +137,10 @@ const resultMarks = document.getElementById('result-marks');
 // Only add event listeners if elements exist
 if (categoryButtons.length > 0) {
     categoryButtons.forEach((button) => {
-        button.addEventListener('click', () => startQuiz(button.dataset.category));
+        button.addEventListener('click', (e) => {
+            playClickSound();
+            startQuiz(button.dataset.category);
+        });
     });
 }
 
@@ -146,6 +149,7 @@ if (nextBtn) {
         if (!activeQuiz) return;
         if (!answered) return;
 
+        playClickSound();
         questionIndex += 1;
         if (questionIndex >= activeQuiz.questions.length) {
             finishQuiz();
@@ -156,11 +160,17 @@ if (nextBtn) {
 }
 
 if (quitBtn) {
-    quitBtn.addEventListener('click', returnHome);
+    quitBtn.addEventListener('click', () => {
+        playClickSound();
+        returnHome();
+    });
 }
 
 if (playAgainBtn) {
-    playAgainBtn.addEventListener('click', returnHome);
+    playAgainBtn.addEventListener('click', () => {
+        playClickSound();
+        returnHome();
+    });
 }
 
 let activeQuiz = null;
@@ -172,6 +182,53 @@ let answered = false;
 
 const hide = (element) => element.classList.add('hidden');
 const show = (element) => element.classList.remove('hidden');
+
+const showLoading = () => {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.classList.add('show');
+};
+
+const hideLoading = () => {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.classList.remove('show');
+};
+
+// Sound effects using Web Audio API
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+function playBeep(frequency = 800, duration = 200, type = 'square') {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+    oscillator.type = type;
+
+    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration / 1000);
+}
+
+function playCorrectSound() {
+    // Happy ascending notes
+    setTimeout(() => playBeep(523, 150, 'sine'), 0);   // C5
+    setTimeout(() => playBeep(659, 150, 'sine'), 100); // E5
+    setTimeout(() => playBeep(784, 200, 'sine'), 200); // G5
+}
+
+function playIncorrectSound() {
+    // Sad descending notes
+    setTimeout(() => playBeep(392, 200, 'sawtooth'), 0);  // G4
+    setTimeout(() => playBeep(330, 200, 'sawtooth'), 150); // E4
+}
+
+function playClickSound() {
+    playBeep(600, 100, 'square');
+}
 
 function resetState() {
     questionIndex = 0;
@@ -189,6 +246,14 @@ function renderQuestion() {
     answered = false;
     categoryLabel.textContent = title;
     questionProgress.textContent = `Q ${questionIndex + 1} / ${questions.length}`;
+
+    // Update progress bar
+    const progressPercent = ((questionIndex + 1) / questions.length) * 100;
+    const progressBar = document.getElementById('progress-bar');
+    if (progressBar) {
+        progressBar.style.width = `${progressPercent}%`;
+    }
+
     questionText.textContent = current.prompt;
     optionsContainer.innerHTML = '';
     nextBtn.disabled = true;
@@ -199,7 +264,10 @@ function renderQuestion() {
         button.className = 'option-btn';
         button.textContent = option;
         button.tabIndex = 0;
-        button.addEventListener('click', () => handleAnswer(button, index));
+        button.addEventListener('click', () => {
+            playClickSound();
+            handleAnswer(button, index);
+        });
         optionsContainer.appendChild(button);
     });
 }
@@ -224,6 +292,9 @@ function handleAnswer(button, index) {
     if (index === current.answer) {
         correctCount += 1;
         earnedMarks += current.marks;
+        playCorrectSound();
+    } else {
+        playIncorrectSound();
     }
 
     scoreboard.textContent = `Marks: ${earnedMarks} / ${totalMarks}`;
@@ -231,30 +302,59 @@ function handleAnswer(button, index) {
 }
 
 function startQuiz(category) {
-    // Navigate to quiz page with category parameter
-    window.location.href = `quiz.html?category=${category}`;
+    // Add fade-out transition and navigate to quiz page
+    const crtFrame = document.querySelector('.crt-frame');
+    if (crtFrame) crtFrame.classList.add('fade-out');
+
+    setTimeout(() => {
+        showLoading();
+        setTimeout(() => {
+            window.location.href = `quiz.html?category=${category}`;
+        }, 200);
+    }, 300);
 }
 
 function finishQuiz() {
-    // Navigate to results page with quiz results
-    const params = new URLSearchParams({
-        total: activeQuiz.questions.length,
-        correct: correctCount,
-        marks: earnedMarks,
-        totalMarks: totalMarks
-    });
-    window.location.href = `results.html?${params.toString()}`;
+    // Add fade-out transition and navigate to results page
+    const crtFrame = document.querySelector('.crt-frame');
+    if (crtFrame) crtFrame.classList.add('fade-out');
+
+    setTimeout(() => {
+        showLoading();
+        setTimeout(() => {
+            const params = new URLSearchParams({
+                total: activeQuiz.questions.length,
+                correct: correctCount,
+                marks: earnedMarks,
+                totalMarks: totalMarks
+            });
+            window.location.href = `results.html?${params.toString()}`;
+        }, 200);
+    }, 300);
 }
 
 function returnHome() {
-    // Navigate back to home page
-    window.location.href = 'index.html';
+    // Add fade-out transition and navigate back to home page
+    const crtFrame = document.querySelector('.crt-frame');
+    if (crtFrame) crtFrame.classList.add('fade-out');
+
+    setTimeout(() => {
+        showLoading();
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 200);
+    }, 300);
 }
 
 
 
 // Initialize based on current page
 document.addEventListener('DOMContentLoaded', () => {
+    // Hide loading overlay and add fade-in effect on page load
+    hideLoading();
+    const crtFrame = document.querySelector('.crt-frame');
+    if (crtFrame) crtFrame.classList.add('fade-in');
+
     const urlParams = new URLSearchParams(window.location.search);
 
     // If on quiz page, initialize quiz with category from URL

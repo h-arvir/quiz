@@ -134,6 +134,35 @@ const resultTotal = document.getElementById('result-total');
 const resultCorrect = document.getElementById('result-correct');
 const resultMarks = document.getElementById('result-marks');
 
+// Only add event listeners if elements exist
+if (categoryButtons.length > 0) {
+    categoryButtons.forEach((button) => {
+        button.addEventListener('click', () => startQuiz(button.dataset.category));
+    });
+}
+
+if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+        if (!activeQuiz) return;
+        if (!answered) return;
+
+        questionIndex += 1;
+        if (questionIndex >= activeQuiz.questions.length) {
+            finishQuiz();
+        } else {
+            renderQuestion();
+        }
+    });
+}
+
+if (quitBtn) {
+    quitBtn.addEventListener('click', returnHome);
+}
+
+if (playAgainBtn) {
+    playAgainBtn.addEventListener('click', returnHome);
+}
+
 let activeQuiz = null;
 let questionIndex = 0;
 let earnedMarks = 0;
@@ -202,53 +231,59 @@ function handleAnswer(button, index) {
 }
 
 function startQuiz(category) {
-    activeQuiz = quizzes[category];
-    if (!activeQuiz) return;
-
-    hide(categoryScreen);
-    hide(resultScreen);
-    show(quizScreen);
-
-    resetState();
-    renderQuestion();
+    // Navigate to quiz page with category parameter
+    window.location.href = `quiz.html?category=${category}`;
 }
 
 function finishQuiz() {
-    hide(quizScreen);
-    show(resultScreen);
-    resultTotal.textContent = activeQuiz.questions.length;
-    resultCorrect.textContent = correctCount;
-    resultMarks.textContent = `${earnedMarks} / ${totalMarks}`;
+    // Navigate to results page with quiz results
+    const params = new URLSearchParams({
+        total: activeQuiz.questions.length,
+        correct: correctCount,
+        marks: earnedMarks,
+        totalMarks: totalMarks
+    });
+    window.location.href = `results.html?${params.toString()}`;
 }
 
 function returnHome() {
-    show(categoryScreen);
-    hide(quizScreen);
-    hide(resultScreen);
-    activeQuiz = null;
-    questionIndex = 0;
-    earnedMarks = 0;
-    correctCount = 0;
-    scoreboard.textContent = '';
-    questionProgress.textContent = '';
-    categoryLabel.textContent = '';
+    // Navigate back to home page
+    window.location.href = 'index.html';
 }
 
-categoryButtons.forEach((button) => {
-    button.addEventListener('click', () => startQuiz(button.dataset.category));
-});
 
-nextBtn.addEventListener('click', () => {
-    if (!activeQuiz) return;
-    if (!answered) return;
 
-    questionIndex += 1;
-    if (questionIndex >= activeQuiz.questions.length) {
-        finishQuiz();
-    } else {
-        renderQuestion();
+// Initialize based on current page
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // If on quiz page, initialize quiz with category from URL
+    if (document.getElementById('quiz-screen')) {
+        const category = urlParams.get('category');
+        if (category && quizzes[category]) {
+            activeQuiz = quizzes[category];
+            resetState();
+            renderQuestion();
+        } else {
+            // Invalid category, go back to home
+            window.location.href = 'index.html';
+        }
+    }
+
+    // If on results page, display results from URL parameters
+    if (document.getElementById('result-screen')) {
+        const total = urlParams.get('total');
+        const correct = urlParams.get('correct');
+        const marks = urlParams.get('marks');
+        const totalMarksParam = urlParams.get('totalMarks');
+
+        if (total && correct && marks && totalMarksParam) {
+            resultTotal.textContent = total;
+            resultCorrect.textContent = correct;
+            resultMarks.textContent = `${marks} / ${totalMarksParam}`;
+        } else {
+            // Invalid results, go back to home
+            window.location.href = 'index.html';
+        }
     }
 });
-
-quitBtn.addEventListener('click', returnHome);
-playAgainBtn.addEventListener('click', returnHome);

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Quiz Hub - Quiz</title>
+    <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="scanline"></div>
+    <main class="crt-frame">
+        <section id="quiz-screen" class="panel">
+            <div class="quiz-status">
+                <span id="category-label"></span>
+                <span id="question-progress"></span>
+                <span id="scoreboard"></span>
+            </div>
+            <div class="question-card">
+                <h2 id="question-text"></h2>
+                <div id="options-container" class="options"></div>
+            </div>
+            <div class="actions">
+                <button id="next-btn" class="action-btn" disabled>Next</button>
+                <button id="quit-btn" class="action-btn">Quit</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

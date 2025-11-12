@@ -87,35 +87,7 @@ const quizzes = {
             }
         ]
     },
-    maths: {
-        title: 'Maths Trial',
-        questions: [
-            {
-                prompt: 'Solve: ∫ 2x dx from 0 to 3',
-                options: ['9', '6', '18', '12'],
-                answer: 0,
-                marks: 10
-            },
-            {
-                prompt: 'If sin θ = 3/5, cos θ in first quadrant is?',
-                options: ['4/5', '5/4', '√(7)/6', '3/4'],
-                answer: 0,
-                marks: 10
-            },
-            {
-                prompt: 'Determinant of [[2,3],[4,1]] equals?',
-                options: ['-10', '10', '5', '-5'],
-                answer: 0,
-                marks: 10
-            },
-            {
-                prompt: 'Sum of first 20 odd numbers?',
-                options: ['200', '400', '800', '600'],
-                answer: 1,
-                marks: 10
-            }
-        ]
-    }
+
 };
 
 const categoryScreen = document.getElementById('category-screen');
@@ -139,7 +111,20 @@ if (categoryButtons.length > 0) {
     categoryButtons.forEach((button) => {
         button.addEventListener('click', (e) => {
             playClickSound();
-            startQuiz(button.dataset.category);
+            if (button.dataset.category === 'ai') {
+                // Navigate to AI input page
+                const crtFrame = document.querySelector('.crt-frame');
+                if (crtFrame) crtFrame.classList.add('fade-out');
+
+                setTimeout(() => {
+                    showLoading();
+                    setTimeout(() => {
+                        window.location.href = 'ai-input.html';
+                    }, 200);
+                }, 300);
+            } else {
+                startQuiz(button.dataset.category);
+            }
         });
     });
 }
@@ -168,6 +153,25 @@ if (quitBtn) {
 
 if (playAgainBtn) {
     playAgainBtn.addEventListener('click', () => {
+        playClickSound();
+        returnHome();
+    });
+}
+
+// AI input screen event listeners
+const generateAIQuizBtn = document.getElementById('generate-ai-quiz');
+const backToCategoriesBtn = document.getElementById('back-to-categories');
+const aiTopicInput = document.getElementById('ai-topic-input');
+
+if (generateAIQuizBtn) {
+    generateAIQuizBtn.addEventListener('click', () => {
+        playClickSound();
+        generateAIQuiz();
+    });
+}
+
+if (backToCategoriesBtn) {
+    backToCategoriesBtn.addEventListener('click', () => {
         playClickSound();
         returnHome();
     });
@@ -344,6 +348,316 @@ function returnHome() {
             window.location.href = 'index.html';
         }, 200);
     }, 300);
+}
+
+
+
+async function generateAIQuiz() {
+    const topic = aiTopicInput.value.trim();
+    if (!topic) {
+        alert('Please enter a topic for the quiz.');
+        return;
+    }
+
+    showLoading();
+
+    try {
+        // Call Gemini 2.0 Flash API to generate quiz
+        const response = await callGeminiAPI(topic);
+
+        // Create quiz object from API response
+        const aiQuiz = {
+            title: `${topic} Quiz`,
+            questions: response.questions.map(q => ({
+                prompt: q.question,
+                options: q.options,
+                answer: q.correctAnswer,
+                marks: 10
+            }))
+        };
+
+        // Store the AI quiz temporarily and start the quiz
+        quizzes.ai = aiQuiz;
+        startQuiz('ai');
+
+    } catch (error) {
+        console.error('Error generating AI quiz:', error);
+
+        // Handle rate limiting with fallback
+        if (error.message.includes('quota') || error.message.includes('429') || error.message.includes('Too Many Requests')) {
+            alert('AI quiz generation is currently rate limited. Using sample questions instead.');
+            // Fallback to mock questions
+            const mockResponse = await generateMockQuiz(topic);
+
+            const aiQuiz = {
+                title: `${topic} Quiz (Sample)`,
+                questions: mockResponse.questions.map(q => ({
+                    prompt: q.question,
+                    options: q.options,
+                    answer: q.correctAnswer,
+                    marks: 10
+                }))
+            };
+
+            quizzes.ai = aiQuiz;
+            startQuiz('ai');
+            return;
+        }
+
+        alert('Failed to generate quiz. Please try again.');
+        hideLoading();
+    }
+}
+
+// Function to call Gemini 2.0 Flash API
+async function callGeminiAPI(topic) {
+    // Replace 'YOUR_GEMINI_API_KEY' with your actual API key from Google AI Studio
+    const API_KEY = 'AIzaSyAwqu5p-W2M08gG2THHabej2v5n0YC0pcc';
+    const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+
+    const prompt = `Create 10 multiple-choice questions about "${topic}". Each needs 4 options, 1 correct answer.
+
+JSON: [{"question": "Q?", "options": ["A", "B", "C", "D"], "correctAnswer": 0}]
+
+Educational and accurate only.`;
+
+    const requestBody = {
+        contents: [{
+            parts: [{
+                text: prompt
+            }]
+        }],
+        generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 1024,
+        }
+    };
+
+    const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Gemini API error: ${errorData.error?.message || 'Unknown error'}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+        throw new Error('Invalid response from Gemini API');
+    }
+
+    const generatedText = data.candidates[0].content.parts[0].text;
+
+    try {
+        // Try to parse the JSON response
+        const questions = JSON.parse(generatedText.trim());
+
+        // Validate the response structure
+        if (!Array.isArray(questions) || questions.length !== 10) {
+            throw new Error('Invalid quiz format: expected 10 questions');
+        }
+
+        // Validate each question
+        for (let i = 0; i < questions.length; i++) {
+            const q = questions[i];
+            if (!q.question || !Array.isArray(q.options) || q.options.length !== 4 || typeof q.correctAnswer !== 'number' || q.correctAnswer < 0 || q.correctAnswer > 3) {
+                throw new Error(`Invalid question ${i + 1} format`);
+            }
+        }
+
+        return { questions };
+    } catch (parseError) {
+        console.error('Failed to parse Gemini response:', generatedText);
+        throw new Error('Failed to parse quiz data from AI response');
+    }
+}
+
+// Fallback function to generate mock quiz when API is rate limited
+async function generateMockQuiz(topic) {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Generate sample questions based on topic
+    const sampleQuestions = {
+        'javascript': [
+            {
+                question: 'What is the correct way to declare a variable in JavaScript?',
+                options: ['var myVar;', 'variable myVar;', 'v myVar;', 'declare myVar;'],
+                correctAnswer: 0
+            },
+            {
+                question: 'Which method adds an element to the end of an array?',
+                options: ['push()', 'add()', 'append()', 'insert()'],
+                correctAnswer: 0
+            },
+            {
+                question: 'What does "===" mean in JavaScript?',
+                options: ['Equal value only', 'Equal value and type', 'Not equal', 'Greater than'],
+                correctAnswer: 1
+            },
+            {
+                question: 'Which keyword is used to define a function?',
+                options: ['def', 'function', 'fun', 'define'],
+                correctAnswer: 1
+            },
+            {
+                question: 'What is the DOM in JavaScript?',
+                options: ['Data Object Model', 'Document Object Model', 'Dynamic Object Model', 'Display Object Model'],
+                correctAnswer: 1
+            },
+            {
+                question: 'Which symbol is used for comments in JavaScript?',
+                options: ['//', '/* */', '#', '<!-- -->'],
+                correctAnswer: 0
+            },
+            {
+                question: 'What does JSON stand for?',
+                options: ['JavaScript Object Notation', 'JavaScript Online Network', 'JavaScript Object Network', 'Java Simple Object Notation'],
+                correctAnswer: 0
+            },
+            {
+                question: 'Which loop executes at least once?',
+                options: ['for', 'while', 'do-while', 'foreach'],
+                correctAnswer: 2
+            },
+            {
+                question: 'What is the purpose of the "this" keyword?',
+                options: ['Refers to the current object', 'Refers to the parent object', 'Refers to global object', 'Refers to null'],
+                correctAnswer: 0
+            },
+            {
+                question: 'Which method converts a string to uppercase?',
+                options: ['toUpper()', 'upperCase()', 'toUpperCase()', 'makeUpper()'],
+                correctAnswer: 2
+            }
+        ],
+        'python': [
+            {
+                question: 'What is the correct file extension for Python files?',
+                options: ['.py', '.python', '.pt', '.pyt'],
+                correctAnswer: 0
+            },
+            {
+                question: 'Which keyword is used to define a function in Python?',
+                options: ['def', 'function', 'fun', 'define'],
+                correctAnswer: 0
+            },
+            {
+                question: 'What does "len()" function do?',
+                options: ['Returns length of string/list', 'Returns type', 'Returns sum', 'Returns max value'],
+                correctAnswer: 0
+            },
+            {
+                question: 'Which data type is immutable in Python?',
+                options: ['list', 'dict', 'tuple', 'set'],
+                correctAnswer: 2
+            },
+            {
+                question: 'What is the output of print(2**3)?',
+                options: ['6', '8', '9', '23'],
+                correctAnswer: 1
+            },
+            {
+                question: 'Which symbol is used for comments in Python?',
+                options: ['//', '#', '/* */', '<!-- -->'],
+                correctAnswer: 1
+            },
+            {
+                question: 'What does "import" statement do?',
+                options: ['Exports module', 'Imports module', 'Deletes module', 'Renames module'],
+                correctAnswer: 1
+            },
+            {
+                question: 'Which method adds item to end of list?',
+                options: ['add()', 'append()', 'insert()', 'push()'],
+                correctAnswer: 1
+            },
+            {
+                question: 'What is the result of "Hello" + "World"?',
+                options: ['HelloWorld', 'Hello World', 'Error', 'None'],
+                correctAnswer: 0
+            },
+            {
+                question: 'Which loop is used when number of iterations is known?',
+                options: ['while', 'for', 'do-while', 'foreach'],
+                correctAnswer: 1
+            }
+        ],
+        'default': [
+            {
+                question: `What is the capital of France?`,
+                options: ['London', 'Berlin', 'Paris', 'Madrid'],
+                correctAnswer: 2
+            },
+            {
+                question: `Which planet is known as the Red Planet?`,
+                options: ['Venus', 'Mars', 'Jupiter', 'Saturn'],
+                correctAnswer: 1
+            },
+            {
+                question: `What is 2 + 2 × 3?`,
+                options: ['8', '12', '6', '10'],
+                correctAnswer: 0
+            },
+            {
+                question: `Who painted the Mona Lisa?`,
+                options: ['Van Gogh', 'Picasso', 'Da Vinci', 'Michelangelo'],
+                correctAnswer: 2
+            },
+            {
+                question: `What is the largest ocean on Earth?`,
+                options: ['Atlantic', 'Indian', 'Arctic', 'Pacific'],
+                correctAnswer: 3
+            },
+            {
+                question: `Which element has the chemical symbol 'O'?`,
+                options: ['Gold', 'Oxygen', 'Silver', 'Iron'],
+                correctAnswer: 1
+            },
+            {
+                question: `What year did World War II end?`,
+                options: ['1944', '1945', '1946', '1947'],
+                correctAnswer: 1
+            },
+            {
+                question: `Which programming language was created by Guido van Rossum?`,
+                options: ['Java', 'C++', 'Python', 'JavaScript'],
+                correctAnswer: 2
+            },
+            {
+                question: `What is the square root of 144?`,
+                options: ['10', '11', '12', '13'],
+                correctAnswer: 2
+            },
+            {
+                question: `Which country is known as the Land of the Rising Sun?`,
+                options: ['China', 'Japan', 'Thailand', 'South Korea'],
+                correctAnswer: 1
+            }
+        ]
+    };
+
+    // Get questions based on topic (case insensitive)
+    const topicLower = topic.toLowerCase();
+    let questions;
+
+    if (topicLower.includes('javascript') || topicLower.includes('js')) {
+        questions = sampleQuestions.javascript;
+    } else if (topicLower.includes('python')) {
+        questions = sampleQuestions.python;
+    } else {
+        questions = sampleQuestions.default;
+    }
+
+    return { questions };
 }
 
 

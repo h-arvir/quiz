@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Quiz Hub - AI Quiz</title>
+    <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="scanline"></div>
+    <main class="crt-frame">
+        <header class="header">
+            <h1 class="title">PIXEL QUIZ HUB</h1>
+            <p class="subtitle">AI Quiz Generator</p>
+        </header>
+
+        <section id="ai-input-screen" class="panel">
+            <h2 class="panel-title">Enter Your Topic</h2>
+            <p class="subtitle">What would you like to create a quiz about?</p>
+            <div class="ai-input-container">
+                <input type="text" id="ai-topic-input" placeholder="e.g., JavaScript, History, Science..." class="ai-input">
+                <button id="generate-ai-quiz" class="action-btn">Generate Quiz</button>
+                <button id="back-to-categories" class="action-btn secondary">Back</button>
+            </div>
+        </section>
+    </main>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">GENERATING QUIZ...</div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

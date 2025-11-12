@@ -26,36 +26,36 @@ const quizzes = {
                 answer: 3,
                 marks: 10
             },
-            {
-                prompt: 'If A can do a work in 10 days and B in 15 days, how long will they take together?',
-                options: ['6 days', '7 days', '8 days', '9 days'],
-                answer: 0,
-                marks: 10
-            },
-            {
-                prompt: 'The ratio of boys to girls in a class is 3:2. If there are 25 boys, how many girls?',
-                options: ['15', '16', '17', '18'],
-                answer: 2,
-                marks: 10
-            },
-            {
-                prompt: 'A sum becomes Rs.1352 in 2 years at 4% per annum. The principal amount is?',
-                options: ['Rs.1200', 'Rs.1250', 'Rs.1300', 'Rs.1350'],
-                answer: 1,
-                marks: 10
-            },
-            {
-                prompt: 'Find the odd one out: 2, 3, 5, 8, 13, 21',
-                options: ['2', '8', '13', '21'],
-                answer: 1,
-                marks: 10
-            },
-            {
-                prompt: 'A man buys a cycle for Rs.1400 and sells it for Rs.1550. His gain percent is?',
-                options: ['10%', '10.5%', '11%', '11.5%'],
-                answer: 0,
-                marks: 10
-            }
+            // {
+            //     prompt: 'If A can do a work in 10 days and B in 15 days, how long will they take together?',
+            //     options: ['6 days', '7 days', '8 days', '9 days'],
+            //     answer: 0,
+            //     marks: 10
+            // },
+            // {
+            //     prompt: 'The ratio of boys to girls in a class is 3:2. If there are 25 boys, how many girls?',
+            //     options: ['15', '16', '17', '18'],
+            //     answer: 2,
+            //     marks: 10
+            // },
+            // {
+            //     prompt: 'A sum becomes Rs.1352 in 2 years at 4% per annum. The principal amount is?',
+            //     options: ['Rs.1200', 'Rs.1250', 'Rs.1300', 'Rs.1350'],
+            //     answer: 1,
+            //     marks: 10
+            // },
+            // {
+            //     prompt: 'Find the odd one out: 2, 3, 5, 8, 13, 21',
+            //     options: ['2', '8', '13', '21'],
+            //     answer: 1,
+            //     marks: 10
+            // },
+            // {
+            //     prompt: 'A man buys a cycle for Rs.1400 and sells it for Rs.1550. His gain percent is?',
+            //     options: ['10%', '10.5%', '11%', '11.5%'],
+            //     answer: 0,
+            //     marks: 10
+            // }
         ]
     },
     technical: {

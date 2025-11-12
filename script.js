@@ -50,12 +50,12 @@ const quizzes = {
             //     answer: 1,
             //     marks: 10
             // },
-            // {
-            //     prompt: 'A man buys a cycle for Rs.1400 and sells it for Rs.1550. His gain percent is?',
-            //     options: ['10%', '10.5%', '11%', '11.5%'],
-            //     answer: 0,
-            //     marks: 10
-            // }
+            {
+                prompt: 'A man buys a cycle for Rs.1400 and sells it for Rs.1550. His gain percent is?',
+                options: ['10%', '10.5%', '11%', '11.5%'],
+                answer: 0,
+                marks: 10
+            }
         ]
     },
     technical: {
@@ -83,6 +83,12 @@ const quizzes = {
                 prompt: 'Dockerfile instruction to execute commands in new layer during build?',
                 options: ['ENTRYPOINT', 'RUN', 'CMD', 'EXEC'],
                 answer: 1,
+                marks: 10
+            },
+            {
+                prompt: 'Which HTTP method is commonly used to update an existing resource on a server?',
+                options: ['GET', 'POST', 'PUT', 'DELETE'],
+                answer: 2,
                 marks: 10
             }
         ]
